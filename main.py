@@ -220,3 +220,96 @@ def get_patients():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/analytics")
+    def analytics():
+    
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+    
+            cur.execute("""
+            SELECT
+                heart_rate,
+                predicted_hr,
+                spo2,
+                predicted_spo2,
+                bp_sys,
+                predicted_bp_sys,
+                bp_dys,
+                predicted_bp_dys,
+                temperature,
+                predicted_temperature
+            FROM patients
+            """)
+    
+            rows = cur.fetchall()
+    
+            cur.close()
+            conn.close()
+    
+            import numpy as np
+    
+            hr = []
+            hr_pred = []
+    
+            spo2 = []
+            spo2_pred = []
+    
+            sys = []
+            sys_pred = []
+    
+            dys = []
+            dys_pred = []
+    
+            temp = []
+            temp_pred = []
+    
+            for r in rows:
+    
+                if r[0] and r[1]:
+                    hr.append(r[0])
+                    hr_pred.append(r[1])
+    
+                if r[2] and r[3]:
+                    spo2.append(r[2])
+                    spo2_pred.append(r[3])
+    
+                if r[4] and r[5]:
+                    sys.append(r[4])
+                    sys_pred.append(r[5])
+    
+                if r[6] and r[7]:
+                    dys.append(r[6])
+                    dys_pred.append(r[7])
+    
+                if r[8] and r[9]:
+                    temp.append(r[8])
+                    temp_pred.append(r[9])
+    
+            def stats(real, pred):
+    
+                real = np.array(real)
+                pred = np.array(pred)
+    
+                error = np.abs(real - pred)
+    
+                return {
+                    "mae": float(np.mean(error)),
+                    "mean": float(np.mean(real)),
+                    "std": float(np.std(real)),
+                    "min": float(np.min(real)),
+                    "max": float(np.max(real))
+                }
+    
+            return {
+                "heart_rate": stats(hr, hr_pred),
+                "spo2": stats(spo2, spo2_pred),
+                "bp_sys": stats(sys, sys_pred),
+                "bp_dys": stats(dys, dys_pred),
+                "temperature": stats(temp, temp_pred)
+            }
+    
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
