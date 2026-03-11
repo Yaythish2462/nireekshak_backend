@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import psycopg2
 import os
 from typing import Optional
+import numpy as np
 
 # -------------------------------------------------
 # FastAPI App
@@ -12,12 +13,12 @@ from typing import Optional
 app = FastAPI(title="Nireekshak API")
 
 # -------------------------------------------------
-# CORS (Allow frontend access e.g., Netlify)
+# CORS
 # -------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change later to your frontend URL
+    allow_origins=["*"],  # change later to your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,7 +82,7 @@ def health():
 
 
 # -------------------------------------------------
-# Insert Patient Data
+# Insert Patient
 # -------------------------------------------------
 
 @app.post("/api/patient")
@@ -149,7 +150,7 @@ def save_patient(p: Patient):
 
 
 # -------------------------------------------------
-# Get All Patients
+# Fetch All Patients
 # -------------------------------------------------
 
 @app.get("/api/patients")
@@ -221,6 +222,11 @@ def get_patients():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# -------------------------------------------------
+# Analytics Endpoint
+# -------------------------------------------------
+
 @app.get("/api/analytics")
 def analytics():
 
@@ -248,22 +254,11 @@ def analytics():
         cur.close()
         conn.close()
 
-        import numpy as np
-
-        hr = []
-        hr_pred = []
-
-        spo2 = []
-        spo2_pred = []
-
-        sys = []
-        sys_pred = []
-
-        dys = []
-        dys_pred = []
-
-        temp = []
-        temp_pred = []
+        hr, hr_pred = [], []
+        spo2, spo2_pred = [], []
+        sys, sys_pred = [], []
+        dys, dys_pred = [], []
+        temp, temp_pred = [], []
 
         for r in rows:
 
@@ -312,5 +307,3 @@ def analytics():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
